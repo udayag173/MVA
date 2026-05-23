@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TallyERP – Accounting System</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #eff6ff;
+  --danger: #dc2626; --danger-light: #fef2f2;
+  --success: #16a34a; --success-light: #f0fdf4;
+  --bg: #f1f5f9; --surface: #ffffff;
+  --border: #e2e8f0; --text: #1e293b; --text-muted: #64748b; --text-light: #94a3b8;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08); --shadow: 0 4px 12px rgba(0,0,0,.1);
+  --radius: 10px; --radius-sm: 6px; --header-h: 60px;
+}
+html, body, #root { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+/* Layout */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+.main { flex: 1; padding: 24px 20px; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+/* Header */
+.header { height: var(--header-h); background: var(--primary); color: #fff; display: flex; align-items: center; padding: 0 16px; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-icon { width: 32px; height: 32px; background: rgba(255,255,255,.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+.logo-text { font-weight: 700; font-size: 18px; letter-spacing: -.3px; }
+.hamburger { display: none; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+.nav { display: flex; gap: 4px; flex: 1; margin-left: 16px; }
+.nav-item { background: none; border: none; color: rgba(255,255,255,.8); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: background .15s, color .15s; white-space: nowrap; }
+.nav-item:hover { background: rgba(255,255,255,.15); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,.25); color: #fff; }
+.nav-icon { font-size: 16px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.entry-count { font-size: 12px; opacity: .75; }
+
+/* Footer */
+.footer { background: var(--surface); border-top: 1px solid var(--border); text-align: center; padding: 12px; color: var(--text-muted); font-size: 12px; }
+
+/* Page */
+.page { display: flex; flex-direction: column; gap: 20px; }
+.page-title { font-size: 22px; font-weight: 700; color: var(--text); padding-bottom: 4px; }
+
+/* Card */
+.card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
+.form-card { padding: 20px; }
+.form-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+
+/* Form */
+.form-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.form-group { display: flex; flex-direction: column; gap: 5px; min-width: 160px; flex: 1; }
+.form-group.flex-2 { flex: 2; }
+.form-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+.input { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 14px; color: var(--text); background: var(--surface); width: 100%; transition: border-color .15s, box-shadow .15s; -webkit-appearance: none; }
+.input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.input.error { border-color: var(--danger); }
+.error-msg { color: var(--danger); font-size: 12px; }
+.form-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+/* Buttons */
+.btn { border: none; border-radius: var(--radius-sm); padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s, transform .1s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { opacity: .9; }
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); opacity: 1; }
+.btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); opacity: 1; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn-icon { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 16px; color: var(--text-muted); transition: background .15s, color .15s; }
+.btn-icon:hover { background: var(--bg); color: var(--primary); }
+.btn-icon.danger:hover { background: var(--danger-light); color: var(--danger); }
+
+/* Toolbar */
+.toolbar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.search-input { max-width: 240px; flex: 1; }
+
+/* Filter Tabs */
+.filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
+.filter-tab:hover { border-color: var(--primary); color: var(--primary); }
+.filter-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Table */
+.account-table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { background: var(--bg); color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--bg); }
+.table .num-col { text-align: right; }
+.row-editing td { background: var(--primary-light) !important; }
+.zero-row td { color: var(--text-light); }
+
+/* Account Group */
+.group-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: linear-gradient(to right, var(--bg), var(--surface)); border-left: 4px solid transparent; border-bottom: 1px solid var(--border); }
+.group-badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: .5px; }
+.group-count { font-size: 12px; color: var(--text-muted); }
+
+/* Badges */
+.code-badge { display: inline-block; background: var(--bg); color: var(--text-muted); padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid var(--border); }
+.balance-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.balance-badge.debit { background: #dbeafe; color: #1d4ed8; }
+.balance-badge.credit { background: #dcfce7; color: #15803d; }
+.row-actions { display: flex; gap: 4px; align-items: center; }
+
+/* Empty State */
+.empty-state { padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+/* Alerts */
+.alert { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; margin-top: 12px; }
+.alert-error { background: var(--danger-light); color: var(--danger); border: 1px solid #fca5a5; }
+.alert-success { background: var(--success-light); color: var(--success); border: 1px solid #86efac; }
+
+/* Journal Entry */
+.je-table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.je-table { min-width: 580px; }
+.totals-row td { background: var(--bg) !important; font-size: 13px; padding: 10px 14px; border-top: 2px solid var(--border); }
+.amount-debit { color: #1d4ed8; font-weight: 600; }
+.amount-credit { color: #15803d; font-weight: 600; }
+.zero-bal { color: var(--text-light); }
+
+/* Journal List */
+.journal-list { display: flex; flex-direction: column; }
+.journal-card { border-bottom: 1px solid var(--border); }
+.journal-card:last-child { border-bottom: none; }
+.journal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; transition: background .15s; }
+.journal-header:hover { background: var(--bg); }
+.journal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.journal-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.journal-desc { color: var(--text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+.journal-amount { font-weight: 700; font-size: 14px; color: var(--primary); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.chevron { font-size: 11px; color: var(--text-muted); }
+.journal-detail { padding: 0 16px 12px; background: var(--bg); }
+.journal-actions { margin-top: 10px; display: flex; gap: 8px; }
+
+/* Trial Balance */
+.summary-bar { display: flex; align-items: center; padding: 16px 20px; gap: 0; flex-wrap: wrap; }
+.summary-item { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; padding: 4px 12px; }
+.summary-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+.summary-value { font-size: 20px; font-weight: 800; }
+.summary-divider { width: 1px; background: var(--border); align-self: stretch; margin: 0 4px; }
+.balance-status { font-size: 16px; font-weight: 800; padding: 3px 10px; border-radius: 6px; }
+.balance-status.balanced { color: var(--success); background: var(--success-light); }
+.balance-status.unbalanced { color: var(--danger); background: var(--danger-light); }
+.tb-group-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg); font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.tb-group-totals { font-size: 12px; font-weight: 500; }
+.tb-totals-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg); border-top: 2px solid var(--border); font-weight: 700; font-size: 14px; }
+.tb-totals-values { display: flex; gap: 10px; align-items: center; }
+.tb-totals-sep { color: var(--text-muted); }
+.toggle-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .hamburger { display: block; }
+  .nav { display: none; position: fixed; top: var(--header-h); left: 0; right: 0; background: var(--primary-dark); flex-direction: column; padding: 12px; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 99; }
+  .nav.open { display: flex; }
+  .nav-item { padding: 12px 16px; font-size: 15px; }
+  .main { padding: 16px 12px; }
+  .page-title { font-size: 18px; }
+  .form-card { padding: 14px; }
+  .form-row { flex-direction: column; }
+  .form-group { min-width: unset; }
+  .form-group.flex-2 { flex: unset; }
+  .summary-bar { gap: 8px; }
+  .summary-item { min-width: calc(50% - 12px); }
+  .summary-divider { display: none; }
+  .summary-value { font-size: 16px; }
+  .je-table { min-width: 480px; }
+  .journal-desc { max-width: 160px; }
+  .toolbar { flex-direction: column; align-items: flex-start; }
+  .toolbar-right { width: 100%; }
+  .search-input { max-width: 100%; }
+  .header-right .entry-count { display: none; }
+}
+@media (max-width: 420px) {
+  .tb-group-header { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .tb-totals-row { flex-direction: column; gap: 6px; text-align: center; }
+}
+@media print {
+  .print-hide { display: none !important; }
+  .print-header { display: block !important; text-align: center; margin-bottom: 20px; }
+  .header, .footer, .form-card, .journal-list { display: none !important; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+  body { background: white; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+// ─── Data ────────────────────────────────────────────────────────────────────
+const ACCOUNT_TYPES = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
+const TYPE_COLORS = { Asset:'#3b82f6', Liability:'#ef4444', Equity:'#8b5cf6', Revenue:'#10b981', Expense:'#f59e0b' };
+
+const DEFAULT_ACCOUNTS = [
+  { id:'1001', code:'1001', name:'Cash',                   type:'Asset',     isDefault:true },
+  { id:'1002', code:'1002', name:'Bank Account',           type:'Asset',     isDefault:true },
+  { id:'1003', code:'1003', name:'Accounts Receivable',    type:'Asset',     isDefault:true },
+  { id:'1004', code:'1004', name:'Inventory',              type:'Asset',     isDefault:true },
+  { id:'1005', code:'1005', name:'Prepaid Expenses',       type:'Asset',     isDefault:true },
+  { id:'1006', code:'1006', name:'Fixed Assets',           type:'Asset',     isDefault:true },
+  { id:'1007', code:'1007', name:'Accumulated Depreciation',type:'Asset',    isDefault:true },
+  { id:'2001', code:'2001', name:'Accounts Payable',       type:'Liability', isDefault:true },
+  { id:'2002', code:'2002', name:'Short-term Loans',       type:'Liability', isDefault:true },
+  { id:'2003', code:'2003', name:'Long-term Loans',        type:'Liability', isDefault:true },
+  { id:'2004', code:'2004', name:'Tax Payable',            type:'Liability', isDefault:true },
+  { id:'2005', code:'2005', name:'Accrued Liabilities',    type:'Liability', isDefault:true },
+  { id:'3001', code:'3001', name:'Owner Capital',          type:'Equity',    isDefault:true },
+  { id:'3002', code:'3002', name:'Retained Earnings',      type:'Equity',    isDefault:true },
+  { id:'3003', code:'3003', name:'Drawings',               type:'Equity',    isDefault:true },
+  { id:'4001', code:'4001', name:'Sales Revenue',          type:'Revenue',   isDefault:true },
+  { id:'4002', code:'4002', name:'Service Revenue',        type:'Revenue',   isDefault:true },
+  { id:'4003', code:'4003', name:'Other Income',           type:'Revenue',   isDefault:true },
+  { id:'5001', code:'5001', name:'Cost of Goods Sold',     type:'Expense',   isDefault:true },
+  { id:'5002', code:'5002', name:'Salaries Expense',       type:'Expense',   isDefault:true },
+  { id:'5003', code:'5003', name:'Rent Expense',           type:'Expense',   isDefault:true },
+  { id:'5004', code:'5004', name:'Utilities Expense',      type:'Expense',   isDefault:true },
+  { id:'5005', code:'5005', name:'Depreciation Expense',   type:'Expense',   isDefault:true },
+  { id:'5006', code:'5006', name:'Marketing Expense',      type:'Expense',   isDefault:true },
+  { id:'5007', code:'5007', name:'Office Supplies',        type:'Expense',   isDefault:true },
+];
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+function useLocalStorage(key, init) {
+  const [val, setVal] = useState(() => {
+    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : init; }
+    catch { return init; }
+  });
+  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }, [key, val]);
+  return [val, setVal];
+}
+
+// ─── Chart of Accounts ────────────────────────────────────────────────────────
+function ChartOfAccounts({ accounts, setAccounts }) {
+  const [form, setForm] = useState({ code:'', name:'', type:'Asset' });
+  const [editId, setEditId] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+
+  function validate(f) {
+    const e = {};
+    if (!f.code.trim()) e.code = 'Code is required';
+    else if (accounts.some(a => a.code === f.code.trim() && a.id !== editId)) e.code = 'Code already exists';
+    if (!f.name.trim()) e.name = 'Name is required';
+    return e;
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const errs = validate(form);
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
+    if (editId) {
+      setAccounts(prev => prev.map(a => a.id === editId ? { ...a, ...form, code: form.code.trim(), name: form.name.trim() } : a));
+      setEditId(null);
+    } else {
+      setAccounts(prev => [...prev, { id: Date.now().toString(), code: form.code.trim(), name: form.name.trim(), type: form.type, isDefault: false }]);
+    }
+    setForm({ code:'', name:'', type:'Asset' });
+  }
+
+  function startEdit(acc) { setEditId(acc.id); setForm({ code: acc.code, name: acc.name, type: acc.type }); setErrors({}); }
+  function cancelEdit() { setEditId(null); setForm({ code:'', name:'', type:'Asset' }); setErrors({}); }
+  function deleteAccount(id) { if (window.confirm('Delete this account?')) setAccounts(prev => prev.filter(a => a.id !== id)); }
+
+  const filtered = accounts.filter(a => {
+    const matchType = filter === 'All' || a.type === filter;
+    const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.code.includes(search);
+    return matchType && matchSearch;
+  });
+  const grouped = ACCOUNT_TYPES.reduce((acc, type) => { acc[type] = filtered.filter(a => a.type === type); return acc; }, {});
+
+  return (
+    <div className="page">
+      <h2 className="page-title">Chart of Accounts</h2>
+      <form className="card form-card" onSubmit={handleSubmit}>
+        <h3 className="form-title">{editId ? 'Edit Account' : 'Add New Account'}</h3>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Account Code</label>
+            <input className={errors.code ? 'input error' : 'input'} placeholder="e.g. 1008" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} />
+            {errors.code && <span className="error-msg">{errors.code}</span>}
+          </div>
+          <div className="form-group">
+            <label>Account Name</label>
+            <input className={errors.name ? 'input error' : 'input'} placeholder="e.g. Petty Cash" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            {errors.name && <span className="error-msg">{errors.name}</span>}
+          </div>
+          <div className="form-group">
+            <label>Type</label>
+            <select className="input" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+              {ACCOUNT_TYPES.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="form-actions">
+          <button className="btn btn-primary" type="submit">{editId ? 'Update' : 'Add Account'}</button>
+          {editId && <button className="btn btn-ghost" type="button" onClick={cancelEdit}>Cancel</button>}
+        </div>
+      </form>
+
+      <div className="card">
+        <div className="toolbar">
+          <input className="input search-input" placeholder="Search accounts..." value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="filter-tabs">
+            {['All', ...ACCOUNT_TYPES].map(t => (
+              <button key={t} className={`filter-tab ${filter === t ? 'active' : ''}`} onClick={() => setFilter(t)}
+                style={filter === t && t !== 'All' ? { backgroundColor: TYPE_COLORS[t], color:'#fff', borderColor: TYPE_COLORS[t] } : {}}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        {ACCOUNT_TYPES.map(type => {
+          const list = grouped[type];
+          if (!list.length) return null;
+          return (
+            <div key={type}>
+              <div className="group-header" style={{ borderLeftColor: TYPE_COLORS[type] }}>
+                <span className="group-badge" style={{ backgroundColor: TYPE_COLORS[type] }}>{type}</span>
+                <span className="group-count">{list.length} accounts</span>
+              </div>
+              <div className="account-table-wrap">
+                <table className="table">
+                  <thead><tr><th>Code</th><th>Name</th><th>Normal Balance</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {list.map(acc => (
+                      <tr key={acc.id} className={editId === acc.id ? 'row-editing' : ''}>
+                        <td><span className="code-badge">{acc.code}</span></td>
+                        <td>{acc.name}</td>
+                        <td><span className={`balance-badge ${type==='Asset'||type==='Expense' ? 'debit' : 'credit'}`}>{type==='Asset'||type==='Expense' ? 'Debit' : 'Credit'}</span></td>
+                        <td>
+                          <div className="row-actions">
+                            <button className="btn-icon" title="Edit" onClick={() => startEdit(acc)}>✏️</button>
+                            {!acc.isDefault && <button className="btn-icon danger" title="Delete" onClick={() => deleteAccount(acc.id)}>🗑️</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+        {!filtered.length && <div className="empty-state">No accounts found.</div>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Journal Entry ─────────────────────────────────────────────────────────────
+const EMPTY_LINE = { accountId:'', debit:'', credit:'' };
+function newEntry() {
+  return { id: Date.now().toString(), date: new Date().toISOString().slice(0,10), reference:'', description:'', lines:[{...EMPTY_LINE},{...EMPTY_LINE}] };
+}
+
+function JournalEntry({ accounts, journals, setJournals }) {
+  const [form, setForm] = useState(newEntry());
+  const [errors, setErrors] = useState({});
+  const [viewId, setViewId] = useState(null);
+  const [search, setSearch] = useState('');
+
+  function setLine(idx, field, val) {
+    setForm(f => ({ ...f, lines: f.lines.map((l,i) => i===idx ? {...l,[field]:val} : l) }));
+  }
+  function addLine() { setForm(f => ({ ...f, lines:[...f.lines,{...EMPTY_LINE}] })); }
+  function removeLine(idx) { setForm(f => ({ ...f, lines: f.lines.filter((_,i)=>i!==idx) })); }
+  function parseAmt(v) { const n=parseFloat(v); return isNaN(n)?0:Math.abs(n); }
+
+  const totalDebit  = form.lines.reduce((s,l)=>s+parseAmt(l.debit),0);
+  const totalCredit = form.lines.reduce((s,l)=>s+parseAmt(l.credit),0);
+  const balanced = Math.abs(totalDebit-totalCredit)<0.001 && totalDebit>0;
+
+  function fmt(n) { return n.toLocaleString('en-IN',{minimumFractionDigits:2}); }
+
+  function validate() {
+    const e={};
+    if (!form.date) e.date='Date is required';
+    if (!form.description.trim()) e.description='Description is required';
+    const filled = form.lines.filter(l=>l.accountId||l.debit||l.credit);
+    if (filled.length<2) e.lines='At least two lines are required';
+    filled.forEach((l,i)=>{
+      if (!l.accountId) e[`line_${i}_account`]='Select account';
+      const d=parseAmt(l.debit), c=parseAmt(l.credit);
+      if (d===0&&c===0) e[`line_${i}_amount`]='Enter debit or credit';
+      if (d>0&&c>0) e[`line_${i}_amount`]='Only debit OR credit per line';
+    });
+    if (!balanced && !e.lines) e.balance=`Debits (${fmt(totalDebit)}) must equal Credits (${fmt(totalCredit)})`;
+    return e;
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const errs=validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
+    const entry={
+      ...form, id:Date.now().toString(),
+      lines: form.lines
+        .filter(l=>l.accountId&&(parseAmt(l.debit)>0||parseAmt(l.credit)>0))
+        .map(l=>({accountId:l.accountId, debit:parseAmt(l.debit), credit:parseAmt(l.credit)}))
+    };
+    setJournals(prev=>[entry,...prev]);
+    setForm(newEntry());
+  }
+
+  function deleteEntry(id) {
+    if (window.confirm('Delete this journal entry?')) { setJournals(prev=>prev.filter(j=>j.id!==id)); if(viewId===id) setViewId(null); }
+  }
+
+  const accountMap = Object.fromEntries(accounts.map(a=>[a.id,a]));
+  const filteredJ = journals.filter(j => !search || j.description.toLowerCase().includes(search.toLowerCase()) || j.reference.toLowerCase().includes(search.toLowerCase()) || j.date.includes(search));
+
+  return (
+    <div className="page">
+      <h2 className="page-title">Journal Entry</h2>
+      <form className="card form-card" onSubmit={handleSubmit}>
+        <h3 className="form-title">New Journal Entry</h3>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Date</label>
+            <input type="date" className={errors.date?'input error':'input'} value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
+            {errors.date && <span className="error-msg">{errors.date}</span>}
+          </div>
+          <div className="form-group">
+            <label>Reference No.</label>
+            <input className="input" placeholder="e.g. JV-001" value={form.reference} onChange={e=>setForm(f=>({...f,reference:e.target.value}))} />
+          </div>
+          <div className="form-group flex-2">
+            <label>Description / Narration</label>
+            <input className={errors.description?'input error':'input'} placeholder="Describe the transaction" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} />
+            {errors.description && <span className="error-msg">{errors.description}</span>}
+          </div>
+        </div>
+
+        <div className="je-table-wrap">
+          <table className="table je-table">
+            <thead>
+              <tr><th style={{width:'40%'}}>Account</th><th>Debit (Dr)</th><th>Credit (Cr)</th><th></th></tr>
+            </thead>
+            <tbody>
+              {form.lines.map((line,idx)=>(
+                <tr key={idx}>
+                  <td>
+                    <select className={errors[`line_${idx}_account`]?'input error':'input'} value={line.accountId} onChange={e=>setLine(idx,'accountId',e.target.value)}>
+                      <option value="">-- Select Account --</option>
+                      {ACCOUNT_TYPES.map(type=>{
+                        const grp=accounts.filter(a=>a.type===type);
+                        if (!grp.length) return null;
+                        return <optgroup key={type} label={type}>{grp.map(a=><option key={a.id} value={a.id}>{a.code} – {a.name}</option>)}</optgroup>;
+                      })}
+                    </select>
+                    {errors[`line_${idx}_account`] && <span className="error-msg">{errors[`line_${idx}_account`]}</span>}
+                  </td>
+                  <td>
+                    <input type="number" min="0" step="0.01" className={errors[`line_${idx}_amount`]?'input error':'input'} placeholder="0.00" value={line.debit} onChange={e=>setLine(idx,'debit',e.target.value)} />
+                  </td>
+                  <td>
+                    <input type="number" min="0" step="0.01" className={errors[`line_${idx}_amount`]?'input error':'input'} placeholder="0.00" value={line.credit} onChange={e=>setLine(idx,'credit',e.target.value)} />
+                    {errors[`line_${idx}_amount`] && <span className="error-msg">{errors[`line_${idx}_amount`]}</span>}
+                  </td>
+                  <td>{form.lines.length>2 && <button type="button" className="btn-icon danger" onClick={()=>removeLine(idx)}>✕</button>}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="totals-row">
+                <td><button type="button" className="btn btn-ghost btn-sm" onClick={addLine}>+ Add Line</button></td>
+                <td><strong className={totalDebit>0?'amount-debit':''}>{totalDebit>0?fmt(totalDebit):'—'}</strong></td>
+                <td><strong className={totalCredit>0?'amount-credit':''}>{totalCredit>0?fmt(totalCredit):'—'}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {errors.lines && <div className="alert alert-error">{errors.lines}</div>}
+        {errors.balance && <div className="alert alert-error">{errors.balance}</div>}
+        {balanced && totalDebit>0 && <div className="alert alert-success">✓ Balanced — Total: {fmt(totalDebit)}</div>}
+
+        <div className="form-actions">
+          <button className="btn btn-primary" type="submit">Post Journal Entry</button>
+          <button className="btn btn-ghost" type="button" onClick={()=>{setForm(newEntry());setErrors({});}}>Clear</button>
+        </div>
+      </form>
+
+      <div className="card">
+        <div className="toolbar">
+          <h3 style={{margin:0}}>Posted Entries ({journals.length})</h3>
+          <input className="input search-input" placeholder="Search entries..." value={search} onChange={e=>setSearch(e.target.value)} />
+        </div>
+        {filteredJ.length===0
+          ? <div className="empty-state">No journal entries yet. Create one above.</div>
+          : <div className="journal-list">
+              {filteredJ.map(j=>(
+                <div key={j.id} className="journal-card">
+                  <div className="journal-header" onClick={()=>setViewId(viewId===j.id?null:j.id)}>
+                    <div className="journal-meta">
+                      <span className="journal-date">{j.date}</span>
+                      {j.reference && <span className="code-badge">{j.reference}</span>}
+                      <span className="journal-desc">{j.description}</span>
+                    </div>
+                    <div className="journal-amount">
+                      {fmt(j.lines.reduce((s,l)=>s+l.debit,0))}
+                      <span className="chevron">{viewId===j.id?'▲':'▼'}</span>
+                    </div>
+                  </div>
+                  {viewId===j.id && (
+                    <div className="journal-detail">
+                      <table className="table">
+                        <thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead>
+                        <tbody>
+                          {j.lines.map((l,i)=>{
+                            const acc=accountMap[l.accountId];
+                            return (
+                              <tr key={i}>
+                                <td>{acc ? `${acc.code} – ${acc.name}` : l.accountId}</td>
+                                <td className="amount-debit">{l.debit>0?fmt(l.debit):''}</td>
+                                <td className="amount-credit">{l.credit>0?fmt(l.credit):''}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div className="journal-actions">
+                        <button className="btn btn-danger btn-sm" onClick={()=>deleteEntry(j.id)}>Delete Entry</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─── Trial Balance ─────────────────────────────────────────────────────────────
+function TrialBalance({ accounts, journals }) {
+  const [showZero, setShowZero] = useState(false);
+  const [filterType, setFilterType] = useState('All');
+
+  const rows = useMemo(()=>{
+    const bal={};
+    accounts.forEach(a=>{ bal[a.id]={debit:0,credit:0}; });
+    journals.forEach(j=>{ j.lines.forEach(l=>{ if(!bal[l.accountId]) bal[l.accountId]={debit:0,credit:0}; bal[l.accountId].debit+=l.debit; bal[l.accountId].credit+=l.credit; }); });
+    return accounts.map(acc=>{
+      const {debit,credit}=bal[acc.id]||{debit:0,credit:0};
+      return {...acc, totalDebit:debit, totalCredit:credit, rawNet:debit-credit};
+    });
+  },[accounts,journals]);
+
+  const filtered=rows.filter(r=>{
+    if (!showZero && r.totalDebit===0 && r.totalCredit===0) return false;
+    if (filterType!=='All' && r.type!==filterType) return false;
+    return true;
+  });
+
+  const grandDebit=filtered.reduce((s,r)=>s+r.totalDebit,0);
+  const grandCredit=filtered.reduce((s,r)=>s+r.totalCredit,0);
+  const isBalanced=Math.abs(grandDebit-grandCredit)<0.001;
+
+  function fmt(n) { if(n===0) return '—'; return n.toLocaleString('en-IN',{minimumFractionDigits:2}); }
+  const grouped=ACCOUNT_TYPES.reduce((acc,type)=>{ acc[type]=filtered.filter(r=>r.type===type); return acc; },{});
+
+  return (
+    <div className="page">
+      <h2 className="page-title">Trial Balance</h2>
+
+      <div className="card summary-bar">
+        <div className="summary-item">
+          <span className="summary-label">Total Debits</span>
+          <span className="summary-value amount-debit">{grandDebit.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
+        </div>
+        <div className="summary-divider"/>
+        <div className="summary-item">
+          <span className="summary-label">Total Credits</span>
+          <span className="summary-value amount-credit">{grandCredit.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
+        </div>
+        <div className="summary-divider"/>
+        <div className="summary-item">
+          <span className="summary-label">Status</span>
+          <span className={`balance-status ${isBalanced?'balanced':'unbalanced'}`}>{isBalanced?'Balanced':'UNBALANCED'}</span>
+        </div>
+        <div className="summary-divider"/>
+        <div className="summary-item">
+          <span className="summary-label">Journal Entries</span>
+          <span className="summary-value">{journals.length}</span>
+        </div>
+      </div>
+
+      {!isBalanced && grandDebit+grandCredit>0 && (
+        <div className="alert alert-error">Warning: Books are out of balance by {Math.abs(grandDebit-grandCredit).toLocaleString('en-IN',{minimumFractionDigits:2})}.</div>
+      )}
+
+      <div className="card">
+        <div className="toolbar print-hide">
+          <div className="filter-tabs">
+            {['All',...ACCOUNT_TYPES].map(t=>(
+              <button key={t} className={`filter-tab ${filterType===t?'active':''}`} onClick={()=>setFilterType(t)}>{t}</button>
+            ))}
+          </div>
+          <div className="toolbar-right">
+            <label className="toggle-label">
+              <input type="checkbox" checked={showZero} onChange={e=>setShowZero(e.target.checked)} />
+              Show zero-balance
+            </label>
+            <button className="btn btn-ghost btn-sm" onClick={()=>window.print()}>🖨️ Print</button>
+          </div>
+        </div>
+
+        <div className="print-header" style={{display:'none'}}>
+          <h2>Trial Balance</h2>
+          <p>As of {new Date().toLocaleDateString('en-IN',{year:'numeric',month:'long',day:'numeric'})}</p>
+        </div>
+
+        {filtered.length===0
+          ? <div className="empty-state">No transactions to display. Post some journal entries first.</div>
+          : <>
+              {ACCOUNT_TYPES.map(type=>{
+                const list=grouped[type];
+                if (!list.length) return null;
+                const typeDebit=list.reduce((s,r)=>s+r.totalDebit,0);
+                const typeCredit=list.reduce((s,r)=>s+r.totalCredit,0);
+                return (
+                  <div key={type}>
+                    <div className="tb-group-header">
+                      <span>{type}s</span>
+                      <span className="tb-group-totals">Dr: {typeDebit.toLocaleString('en-IN',{minimumFractionDigits:2})} | Cr: {typeCredit.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
+                    </div>
+                    <div className="account-table-wrap">
+                      <table className="table">
+                        <thead><tr><th>Code</th><th>Account Name</th><th className="num-col">Debit</th><th className="num-col">Credit</th><th className="num-col">Net Balance</th></tr></thead>
+                        <tbody>
+                          {list.map(row=>(
+                            <tr key={row.id} className={row.totalDebit===0&&row.totalCredit===0?'zero-row':''}>
+                              <td><span className="code-badge">{row.code}</span></td>
+                              <td>{row.name}</td>
+                              <td className="num-col amount-debit">{fmt(row.totalDebit)}</td>
+                              <td className="num-col amount-credit">{fmt(row.totalCredit)}</td>
+                              <td className="num-col">
+                                {row.rawNet>0 ? <span className="amount-debit">{row.rawNet.toLocaleString('en-IN',{minimumFractionDigits:2})} Dr</span>
+                                  : row.rawNet<0 ? <span className="amount-credit">{(-row.rawNet).toLocaleString('en-IN',{minimumFractionDigits:2})} Cr</span>
+                                  : <span className="zero-bal">0.00</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="tb-totals-row">
+                <span>Grand Total</span>
+                <div className="tb-totals-values">
+                  <span className="amount-debit">{grandDebit.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
+                  <span className="tb-totals-sep">/</span>
+                  <span className="amount-credit">{grandCredit.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
+                </div>
+              </div>
+            </>
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─── App Shell ────────────────────────────────────────────────────────────────
+const NAV = [
+  { id:'coa', label:'Chart of Accounts', icon:'🏦' },
+  { id:'je',  label:'Journal Entry',     icon:'📒' },
+  { id:'tb',  label:'Trial Balance',     icon:'⚖️'  },
+];
+
+function App() {
+  const [tab, setTab] = useState('coa');
+  const [accounts, setAccounts] = useLocalStorage('tally_accounts', DEFAULT_ACCOUNTS);
+  const [journals, setJournals] = useLocalStorage('tally_journals', []);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function resetData() {
+    if (window.confirm('Reset all data to defaults? All journal entries and custom accounts will be lost.')) {
+      setAccounts(DEFAULT_ACCOUNTS); setJournals([]);
+    }
+  }
+
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="header-left">
+          <button className="hamburger" onClick={()=>setMenuOpen(o=>!o)} aria-label="Menu">{menuOpen?'✕':'☰'}</button>
+          <div className="logo">
+            <span className="logo-icon">T</span>
+            <span className="logo-text">TallyERP</span>
+          </div>
+        </div>
+        <nav className={`nav ${menuOpen?'open':''}`}>
+          {NAV.map(item=>(
+            <button key={item.id} className={`nav-item ${tab===item.id?'active':''}`}
+              onClick={()=>{setTab(item.id);setMenuOpen(false);}}>
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="header-right">
+          <span className="entry-count">{journals.length} entries</span>
+          <button className="btn btn-ghost btn-sm" onClick={resetData}>Reset</button>
+        </div>
+      </header>
+
+      <main className="main">
+        {tab==='coa' && <ChartOfAccounts accounts={accounts} setAccounts={setAccounts} />}
+        {tab==='je'  && <JournalEntry accounts={accounts} journals={journals} setJournals={setJournals} />}
+        {tab==='tb'  && <TrialBalance accounts={accounts} journals={journals} />}
+      </main>
+
+      <footer className="footer">
+        TallyERP &copy; {new Date().getFullYear()} — Data stored locally in your browser
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
